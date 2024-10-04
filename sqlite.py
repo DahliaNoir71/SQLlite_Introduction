@@ -28,9 +28,9 @@ VALUES
 
 insert_commande = """
 INSERT INTO Commandes 
-    (nom, prenom, email, date_inscription)
+    (client_id, produit, date_commande)
 VALUES
-    (:nom, :prenom, :email, :date_inscription)
+    (:client_id, :produit, DATE('now'))
 """
 
 client_1 = {
@@ -58,8 +58,16 @@ db_cursor.execute(create_table_commandes)
 
 for client in clients:
     db_cursor.execute(insert_client, client)
-    last_id = db_cursor.lastrowid
-    print('last id inserted : ' + str(last_id))
+    last_client_id = db_cursor.lastrowid
+    print('last client id = ' + str(last_client_id))
+    commande = {
+        "client_id" : last_client_id,
+        "produit" : "produit" + str(last_client_id),
+    }
+    db_cursor.execute(insert_commande, commande)
+    last_commande_id = db_cursor.lastrowid
+    print('last commande id = ' + str(last_commande_id))
+
 
 
 db_connect.close()

@@ -1,7 +1,11 @@
 import random
 import sqlite3
+import string
+from datetime import datetime, timedelta
 
-# Constantes pour les requêtes SQL
+DB_NAME = "clients_commandes.db"
+
+
 SQL_REQUESTS = {
     "create_clients_table": """
         CREATE TABLE IF NOT EXISTS Clients (
@@ -78,9 +82,9 @@ SQL_REQUESTS = {
 }
 
 
-def get_db_connection(db_name='my_db.db'):
+def get_db_connection(db_name):
     """
-    :param db_name: Name of the database file to connect to. Defaults to 'my_db.db'.
+    :param db_name: Name of the database file to connect to
     :return: A tuple containing the database connection and the cursor.
     """
     connection = sqlite3.connect(db_name)
@@ -191,34 +195,40 @@ def export_table_to_csv(table_name):
             f.write(','.join(str(r) for r in row) + '\n')
     print(f'{len(rows)} rows written successfully to {table_name}.csv')
 
-def insert_clients_commandes():
+def insert_random_clients():
     """
     Inserts client records into the database and assigns commandes (orders) to each client.
 
     :return: None
     """
-    global client
-    clients_data = [
-        {"nom": "NOM1", "prenom": "PRENOM1", "email": "nom1.prenom1@ici.la", "date_inscription": "2020-09-01"},
-        {"nom": "NOM2", "prenom": "PRENOM2", "email": "nom2.prenom2@ici.la", "date_inscription": "2023-10-01"}
-    ]
-    for client in clients_data:
+    clients = get_random_clients()
+    for client in clients:
         last_client_id = insert_client(db_cursor, client)
-        produits = [f"produit{last_client_id}", f"produit{last_client_id + 1}"]
-        insert_commandes(db_cursor, last_client_id, produits)
+        #produits = [f"produit{last_client_id}", f"produit{last_client_id + 1}"]
+        #insert_commandes(db_cursor, last_client_id, produits)
     db_connection.commit()
 
-def print_clients():
-    """
-    Fetches all clients from the database and prints each client's details.
+def gen_datetime(min_year=2000, max_year=datetime.now().year):
+    # generate a datetime in format yyyy-mm-dd hh:mm:ss.000000
+    start = datetime(min_year, 1, 1)
+    years = max_year - min_year + 1
+    end = start + timedelta(days=365 * years)
+    return start + (end - start) * random.random()
 
-    :return: None
-    :rtype: None
-    """
-    global clients, client
-    clients = fetch_all_clients(db_cursor)
-    for client in clients:
-        print(client)
+def get_random_clients():
+    random_clients = []
+    random_nb_clients = random.randint(1, 10)
+    for i in range(random_nb_clients):
+        random_nom = ''.join(random.choices(string.ascii_uppercase, k=random.randint(5, 10)))
+        random_prenom = ''.join(random.choices(string.ascii_lowercase, k=random.randint(5, 10)))
+        random_client = {
+            "nom": random_nom,
+            "prenom": random_prenom,
+            "email": random_nom + "." + random_prenom + "@ici.la",
+            "date_inscription": gen_datetime().strftime("%Y-%m-%d")
+        }
+        random_clients.append(random_client)
+    return random_clients
 
 def update_email_client():
     """
@@ -236,17 +246,17 @@ def update_email_client():
     db_connection.commit()
 
 # Initialisation de la base de données et création des tables
-db_connection, db_cursor = get_db_connection()
+db_connection, db_cursor = get_db_connection(DB_NAME)
 create_tables(db_cursor)
 
 # Insertion de clients et commandes
-insert_clients_commandes()
+insert_random_clients()
 
 # Affichage des clients
-print_clients()
+#print_clients()
 
 # Sélection et mise à jour de l'email d'un client aléatoire
-update_email_client()
+#update_email_client()
 
 
 def delete_random_commande():
@@ -264,10 +274,15 @@ def delete_random_commande():
 
 
 # Suppression d'une commande aléatoire
-delete_random_commande()
+#delete_random_commande()
 
 db_connection.close()
 
+
+def export_tables_to_csv():
+    export_table_to_csv('Clients')
+    export_table_to_csv('Commandes')
+
+
 # Exportation des tables
-export_table_to_csv('Clients')
-export_table_to_csv('Commandes')
+#export_tables_to_csv()
